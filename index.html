@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buzón de quejas · Llamado a la conciencia · SOMOS</title>
+<style>
+  :root {
+    --naranja-fuego: #ff5a00;
+    --naranja-intenso: #ff7a18;
+    --naranja-ambar: #ffa600;
+    --naranja-suave: #ffd29b;
+    --carbon: #140a04;
+    --carbon-2: #23120a;
+    --humo: rgba(255, 255, 255, 0.06);
+    --texto: #f6ede6;
+    --texto-tenue: #d9c3b2;
+    --borde: rgba(255, 138, 30, 0.35);
+    --sombra: 0 18px 50px rgba(0, 0, 0, 0.55);
+    --radio: 22px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: var(--texto);
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(255, 122, 24, 0.35), transparent 60%),
+      radial-gradient(900px 600px at -10% 20%, rgba(255, 90, 0, 0.28), transparent 60%),
+      linear-gradient(160deg, var(--carbon), var(--carbon-2) 45%, #0b0503);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ---------- Fondo animado ---------- */
+  #lienzo {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+
+  .aurora {
+    position: fixed;
+    width: 60vmax;
+    height: 60vmax;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.35;
+    z-index: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    animation: flotar 22s ease-in-out infinite alternate;
+  }
+  .aurora.a { background: var(--naranja-fuego); top: -20vmax; left: -15vmax; }
+  .aurora.b { background: var(--naranja-ambar); bottom: -25vmax; right: -15vmax; animation-delay: -7s; }
+  .aurora.c { background: #ff2e00; top: 40%; left: 55%; animation-delay: -13s; opacity: 0.22; }
+
+  @keyframes flotar {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(6vmax, -4vmax, 0) scale(1.18); }
+  }
+
+  /* ---------- Barra de progreso ---------- */
+  #progreso {
+    position: fixed;
+    top: 0; left: 0;
+    height: 4px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--naranja-fuego), var(--naranja-ambar), #fff3b0);
+    box-shadow: 0 0 18px var(--naranja-intenso);
+    z-index: 2000;
+    transition: width 0.1s linear;
+  }
+
+  /* ---------- Botón menú ---------- */
+  #toggleSidebar {
+    position: fixed;
+    top: 22px;
+    left: 22px;
+    z-index: 1100;
+    background: linear-gradient(135deg, var(--naranja-fuego), var(--naranja-ambar));
+    color: #1a0c04;
+    border: none;
+    padding: 12px 18px;
+    font-size: 1em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(255, 90, 0, 0.45);
+    transition: transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s ease, filter 0.25s ease;
+  }
+  #toggleSidebar:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.08); box-shadow: 0 14px 34px rgba(255, 122, 24, 0.6); }
+  #toggleSidebar:active { transform: scale(0.97); }
+  #toggleSidebar::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 166, 0, 0.5);
+    animation: pulso 2.8s ease-out infinite;
+    pointer-events: none;
+  }
+  @keyframes pulso {
+    0%   { transform: scale(1); opacity: 0.8; }
+    70%  { transform: scale(1.35); opacity: 0; }
+    100% { opacity: 0; }
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 268px;
+    height: 100%;
+    padding: 90px 22px 22px;
+    background: linear-gradient(180deg, rgba(35, 18, 10, 0.96), rgba(12, 6, 3, 0.96));
+    backdrop-filter: blur(14px);
+    border-right: 1px solid var(--borde);
+    border-top-right-radius: 28px;
+    border-bottom-right-radius: 28px;
+    box-shadow: 24px 0 60px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transition: left 0.55s cubic-bezier(.2,.9,.2,1);
+  }
+  .sidebar.open { left: 0; }
+
+  .sidebar h3 {
+    margin: 0 0 22px;
+    text-align: center;
+    font-size: 0.95em;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--naranja-ambar);
+  }
+
+  .sidebar a {
+    position: relative;
+    display: block;
+    margin: 12px 0;
+    padding: 12px 16px;
+    color: var(--texto);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border-radius: 14px;
+    background: var(--humo);
+    border: 1px solid transparent;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(-18px);
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+  }
+  .sidebar.open a { animation: entraLink 0.5s forwards; }
+  .sidebar.open a:nth-child(2) { animation-delay: 0.08s; }
+  .sidebar.open a:nth-child(3) { animation-delay: 0.14s; }
+  .sidebar.open a:nth-child(4) { animation-delay: 0.20s; }
+  .sidebar.open a:nth-child(5) { animation-delay: 0.26s; }
+  .sidebar.open a:nth-child(6) { animation-delay: 0.32s; }
+  .sidebar.open a:nth-child(7) { animation-delay: 0.38s; }
+  @keyframes entraLink {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .sidebar a::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--naranja-fuego), var(--naranja-ambar));
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.3s ease;
+  }
+  .sidebar a:hover {
+    background: linear-gradient(90deg, rgba(255, 122, 24, 0.22), transparent);
+    border-color: var(--borde);
+    color: var(--naranja-ambar);
+    transform: translateX(6px);
+  }
+  .sidebar a:hover::before { transform: scaleY(1); transform-origin: top; }
+  .sidebar a.activo { color: var(--naranja-ambar); border-color: var(--borde); }
+  .sidebar a.activo::before { transform: scaleY(1); transform-origin: top; }
+
+  #velo {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 2, 1, 0.55);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s ease;
+    z-index: 900;
+  }
+  #velo.visible { opacity: 1; pointer-events: auto; }
+
+  /* ---------- Header ---------- */
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 130px 24px 96px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      conic-gradient(from 0deg, transparent 0 20%, rgba(255, 122, 24, 0.18) 35%, transparent 55%, rgba(255, 166, 0, 0.16) 75%, transparent 100%);
+    animation: girar 26s linear infinite;
+    z-index: -1;
+  }
+  @keyframes girar { to { transform: rotate(360deg); } }
+
+  .kicker {
+    display: inline-block;
+    padding: 8px 18px;
+    margin-bottom: 26px;
+    font-size: 0.78em;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--naranja-ambar);
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    background: rgba(255, 122, 24, 0.08);
+    animation: aparecer 1s 0.1s both;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: clamp(2.2rem, 7vw, 5rem);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1.05;
+    color: #ffb347;
+    filter: drop-shadow(0 0 28px rgba(255, 90, 0, 0.45));
+  }
+
+  header h1 .letra {
+    display: inline-block;
+    background: linear-gradient(100deg, #fff1df 0%, var(--naranja-ambar) 30%, var(--naranja-fuego) 55%, var(--naranja-ambar) 80%, #fff1df 100%);
+    background-size: 250% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    opacity: 0;
+    transform: translateY(40px) rotateX(-70deg);
+    animation:
+      caerLetra 0.8s cubic-bezier(.2,.9,.2,1) forwards,
+      brillo 6s linear infinite;
+  }
+  @keyframes brillo {
+    to { background-position: 250% center; }
+  }
+  @keyframes caerLetra {
+    to { opacity: 1; transform: translateY(0) rotateX(0); }
+  }
+
+  header .lema {
+    margin: 26px auto 0;
+    max-width: 680px;
+    font-size: clamp(1rem, 2.2vw, 1.25rem);
+    color: var(--texto-tenue);
+    animation: aparecer 1.2s 0.9s both;
+  }
+
+  .linea-fuego {
+    width: min(520px, 70%);
+    height: 2px;
+    margin: 38px auto 0;
+    background: linear-gradient(90deg, transparent, var(--naranja-fuego), var(--naranja-ambar), transparent);
+    box-shadow: 0 0 24px var(--naranja-fuego);
+    animation: aparecer 1.2s 1.1s both;
+  }
+
+  @keyframes aparecer {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .scroll-hint {
+    display: block;
+    margin: 46px auto 0;
+    width: 26px;
+    height: 44px;
+    border: 2px solid var(--borde);
+    border-radius: 16px;
+    position: relative;
+    animation: aparecer 1.2s 1.3s both;
+  }
+  .scroll-hint::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 8px;
+    width: 4px; height: 8px;
+    margin-left: -2px;
+    border-radius: 4px;
+    background: var(--naranja-ambar);
+    animation: rueda 1.8s ease-in-out infinite;
+  }
+  @keyframes rueda {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    60% { transform: translateY(16px); opacity: 0.1; }
+  }
+
+  /* ---------- Secciones ---------- */
+  main { position: relative; z-index: 1; padding-bottom: 60px; }
+
+  section {
+    max-width: 1080px;
+    margin: 34px auto;
+    padding: 46px 34px;
+    border-radius: var(--radio);
+    background: linear-gradient(160deg, rgba(38, 20, 11, 0.72), rgba(16, 8, 4, 0.72));
+    border: 1px solid var(--borde);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--sombra);
+    opacity: 0;
+    transform: translateY(46px);
+    transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2,.9,.2,1);
+  }
+  section.visible { opacity: 1; transform: translateY(0); }
+
+  h2 {
+    margin: 0 0 30px;
+    text-align: center;
+    font-size: clamp(1.4rem, 3.4vw, 2.1rem);
+    letter-spacing: 0.04em;
+    color: #fff4e6;
+  }
+  h2 span.sub {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.42em;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--naranja-intenso);
+  }
+  h2::after {
+    content: "";
+    display: block;
+    width: 90px;
+    height: 3px;
+    margin: 18px auto 0;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--naranja-fuego), var(--naranja-ambar));
+    box-shadow: 0 0 18px rgba(255, 122, 24, 0.7);
+  }
+
+  .card {
+    position: relative;
+    padding: 30px 30px 30px 34px;
+    border-radius: 18px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+    border: 1px solid rgba(255, 166, 0, 0.18);
+    overflow: hidden;
+    transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    background: linear-gradient(180deg, var(--naranja-fuego), var(--naranja-ambar));
+    box-shadow: 0 0 22px rgba(255, 122, 24, 0.7);
+  }
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 138, 30, 0.22), transparent 55%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+  .card:hover {
+    border-color: rgba(255, 166, 0, 0.55);
+    box-shadow: 0 24px 60px rgba(255, 90, 0, 0.22);
+  }
+  .card:hover::after { opacity: 1; }
+
+  .card h3 {
+    margin: 0 0 12px;
+    font-size: 1.32em;
+    color: var(--naranja-ambar);
+    letter-spacing: 0.02em;
+  }
+  .card p {
+    margin: 0 0 16px;
+    line-height: 1.75;
+    color: var(--texto-tenue);
+  }
+  .card p:last-child { margin-bottom: 0; }
+  .card strong { color: var(--naranja-ambar); }
+
+  .capital {
+    float: left;
+    margin: 4px 14px 0 0;
+    font-size: 3.4em;
+    line-height: 0.82;
+    font-weight: 800;
+    background: linear-gradient(140deg, var(--naranja-ambar), var(--naranja-fuego));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 18px rgba(255, 90, 0, 0.45));
+  }
+
+  .frase {
+    margin-top: 26px !important;
+    padding: 20px 24px;
+    font-size: 1.15em !important;
+    text-align: center;
+    color: var(--texto);
+    border-radius: 16px;
+    border: 1px solid var(--borde);
+    background: rgba(255, 122, 24, 0.09);
+    animation: latir 3.6s ease-in-out infinite;
+  }
+  @keyframes latir {
+    0%, 100% { box-shadow: 0 0 0 rgba(255, 90, 0, 0); }
+    50% { box-shadow: 0 0 38px rgba(255, 90, 0, 0.35); }
+  }
+
+  .etiquetas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .etiquetas span {
+    padding: 6px 14px;
+    font-size: 0.78em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--naranja-suave);
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    background: rgba(255, 122, 24, 0.08);
+    transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+  }
+  .etiquetas span:hover {
+    background: linear-gradient(135deg, var(--naranja-fuego), var(--naranja-ambar));
+    color: #1a0c04;
+    transform: translateY(-2px);
+  }
+
+  /* ---------- Formulario ---------- */
+  form { display: block; }
+
+  .rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  .campo { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .campo:last-of-type { margin-bottom: 0; }
+
+  .campo label {
+    font-size: 0.8em;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--naranja-suave);
+  }
+  .campo label .req { color: var(--naranja-fuego); }
+
+  .campo .ayuda {
+    font-size: 0.82em;
+    color: var(--texto-tenue);
+    letter-spacing: 0.02em;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 14px 16px;
+    font-family: inherit;
+    font-size: 1em;
+    color: var(--texto);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  }
+  textarea { min-height: 170px; resize: vertical; line-height: 1.6; }
+  select option { background: #1a0c04; color: var(--texto); }
+
+  input::placeholder, textarea::placeholder { color: rgba(217, 195, 178, 0.45); }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--naranja-ambar);
+    background: rgba(255, 122, 24, 0.09);
+    box-shadow: 0 0 0 3px rgba(255, 122, 24, 0.18), 0 0 26px rgba(255, 90, 0, 0.25);
+  }
+
+  .campo.error input,
+  .campo.error select,
+  .campo.error textarea {
+    border-color: #ff3b1f;
+    box-shadow: 0 0 0 3px rgba(255, 59, 31, 0.2);
+  }
+  .mensaje-error {
+    display: none;
+    font-size: 0.8em;
+    letter-spacing: 0.06em;
+    color: #ff8367;
+  }
+  .campo.error .mensaje-error { display: block; }
+
+  .contador-texto {
+    align-self: flex-end;
+    font-size: 0.76em;
+    letter-spacing: 0.1em;
+    color: var(--texto-tenue);
+  }
+
+  .opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .opciones input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+  }
+  .opciones label {
+    padding: 10px 18px;
+    font-size: 0.82em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--naranja-suave);
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    background: rgba(255, 122, 24, 0.07);
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .opciones label:hover { transform: translateY(-2px); }
+  .opciones input[type="radio"]:checked + label {
+    background: linear-gradient(135deg, var(--naranja-fuego), var(--naranja-ambar));
+    color: #1a0c04;
+    box-shadow: 0 10px 26px rgba(255, 90, 0, 0.4);
+  }
+  .opciones input[type="radio"]:focus-visible + label {
+    box-shadow: 0 0 0 3px rgba(255, 166, 0, 0.5);
+  }
+
+  .casilla {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 6px;
+  }
+  .casilla input[type="checkbox"] {
+    width: 20px; height: 20px;
+    margin: 2px 0 0;
+    accent-color: var(--naranja-fuego);
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .casilla span { font-size: 0.92em; line-height: 1.6; color: var(--texto-tenue); }
+
+  .oculto-bot {
+    position: absolute !important;
+    left: -9999px !important;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 30px;
+  }
+
+  .boton {
+    position: relative;
+    display: inline-block;
+    padding: 14px 30px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #1a0c04;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--naranja-fuego), var(--naranja-ambar));
+    box-shadow: 0 12px 32px rgba(255, 90, 0, 0.45);
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(.2,.9,.2,1), box-shadow 0.3s ease, filter 0.3s ease;
+  }
+  .boton::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -140%;
+    width: 60%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: skewX(-20deg);
+    animation: destello 3.4s ease-in-out infinite;
+  }
+  @keyframes destello {
+    0%, 65% { left: -140%; }
+    100% { left: 160%; }
+  }
+  .boton:hover { transform: translateY(-3px) scale(1.04); filter: brightness(1.08); box-shadow: 0 18px 42px rgba(255, 122, 24, 0.6); }
+  .boton[disabled] { opacity: 0.6; cursor: progress; transform: none; }
+
+  .boton.fantasma {
+    color: var(--naranja-ambar);
+    background: rgba(255, 122, 24, 0.08);
+    border: 1px solid var(--borde);
+    box-shadow: none;
+  }
+  .boton.fantasma::after { display: none; }
+
+  .aviso {
+    display: none;
+    margin-top: 24px;
+    padding: 18px 22px;
+    border-radius: 16px;
+    line-height: 1.7;
+    border: 1px solid var(--borde);
+    background: rgba(255, 122, 24, 0.1);
+    animation: aparecer 0.5s both;
+  }
+  .aviso.visible { display: block; }
+  .aviso.ok { border-color: rgba(120, 255, 170, 0.45); background: rgba(60, 200, 130, 0.12); color: #d6ffe8; }
+  .aviso.mal { border-color: rgba(255, 90, 60, 0.5); background: rgba(255, 60, 30, 0.12); color: #ffd7cd; }
+  .aviso a { color: var(--naranja-ambar); }
+
+  .metricas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    text-align: center;
+  }
+  .metrica {
+    padding: 26px 16px;
+    border-radius: 18px;
+    background: rgba(255, 122, 24, 0.07);
+    border: 1px solid var(--borde);
+    transition: transform 0.35s cubic-bezier(.2,.9,.2,1), box-shadow 0.35s ease;
+  }
+  .metrica:hover { transform: translateY(-8px); box-shadow: 0 20px 44px rgba(255, 90, 0, 0.25); }
+  .metrica b {
+    display: block;
+    font-size: 1.7em;
+    font-weight: 800;
+    background: linear-gradient(120deg, var(--naranja-ambar), var(--naranja-fuego));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .metrica small {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.8em;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    text-align: center;
+  }
+  .cta p {
+    margin: 0;
+    max-width: 520px;
+    line-height: 1.75;
+    color: var(--texto-tenue);
+  }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    padding: 50px 20px 70px;
+    text-align: center;
+    color: var(--texto-tenue);
+    font-size: 0.9em;
+    letter-spacing: 0.12em;
+  }
+  footer strong {
+    color: var(--naranja-ambar);
+    letter-spacing: 0.3em;
+  }
+
+  #irArriba {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1100;
+    width: 50px; height: 50px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #1a0c04;
+    font-size: 1.2em;
+    background: linear-gradient(135deg, var(--naranja-ambar), var(--naranja-fuego));
+    box-shadow: 0 12px 30px rgba(255, 90, 0, 0.45);
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.2,.9,.2,1);
+  }
+  #irArriba.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  #irArriba:hover { filter: brightness(1.1); transform: translateY(-4px) scale(1.06); }
+
+  ::selection { background: var(--naranja-fuego); color: #fff; }
+
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #100804; }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--naranja-fuego), var(--naranja-ambar));
+  }
+
+  @media (max-width: 768px) {
+    header { padding: 120px 18px 70px; }
+    section { margin: 20px 14px; padding: 32px 20px; }
+    .card { padding: 24px 22px 24px 26px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+    section { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="progreso"></div>
+  <canvas id="lienzo"></canvas>
+  <div class="aurora a"></div>
+  <div class="aurora b"></div>
+  <div class="aurora c"></div>
+
+  <button id="toggleSidebar" aria-label="Abrir menú">☰ Menú</button>
+  <div id="velo"></div>
+
+  <nav class="sidebar" id="sidebar">
+    <h3>Explora</h3>
+    <a href="index.html">Inicio</a>
+    <a href="propuestas.html">Propuestas</a>
+    <a href="iniciativas.html">Iniciativas</a>
+    <a href="campañas.html">Campañas</a>
+    <a href="sentido.html">Sentido</a>
+    <a class="activo" href="buzon.html">Buzón de quejas</a>
+  </nav>
+
+  <header>
+    <span class="kicker">SOMOS · Poli Matute</span>
+    <h1 id="titulo">BUZÓN DE QUEJAS</h1>
+    <p class="lema">Llamado a la conciencia. Aquí tu voz no se pierde: se registra, se acompaña y se lleva a donde tiene que llegar.</p>
+    <div class="linea-fuego"></div>
+    <span class="scroll-hint" aria-hidden="true"></span>
+  </header>
+
+  <main>
+    <section>
+      <h2>Antes de escribir<span class="sub">Llamado a la conciencia</span></h2>
+      <div class="card">
+        <p><span class="capital">E</span>ste buzón no es un cajón donde las cosas se guardan y se olvidan. Es un llamado a la conciencia: de quien denuncia, de quien calla y de quien tiene el poder de cambiarlo. Escribe con verdad, con nombres de hechos y no de rumores, con fechas y lugares. Entre más clara sea tu queja, más difícil será ignorarla.</p>
+        <p>Puedes enviarla <strong>de forma anónima</strong>. Si dejas tu correo, te damos seguimiento; si no, igual la recibimos, la registramos y la llevamos a la instancia que corresponda.</p>
+        <p class="frase">Callar también es una decisión. <strong>Alzar la voz es una forma de cuidarnos.</strong></p>
+        <div class="etiquetas"><span>Confidencial</span><span>Anónimo opcional</span><span>Seguimiento real</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Levanta tu queja<span class="sub">Formulario</span></h2>
+      <div class="card">
+        <form id="formQueja" action="https://formsubmit.co/ajax/somospolimatute@gmail.com" method="POST" novalidate>
+          <!-- Configuración FormSubmit -->
+          <input type="hidden" name="_subject" value="Buzón de quejas · Poli Matute">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_captcha" value="false">
+          <div class="oculto-bot" aria-hidden="true">
+            <label>No llenar este campo
+              <input type="text" name="_honey" tabindex="-1" autocomplete="off">
+            </label>
+          </div>
+
+          <div class="campo">
+            <label>Tipo de queja <span class="req">*</span></label>
+            <div class="opciones" role="radiogroup" aria-label="Tipo de queja">
+              <input type="radio" id="t1" name="Tipo de queja" value="Instalaciones" required><label for="t1">Instalaciones</label>
+              <input type="radio" id="t2" name="Tipo de queja" value="Docentes / clases"><label for="t2">Docentes / clases</label>
+              <input type="radio" id="t3" name="Tipo de queja" value="Administración"><label for="t3">Administración</label>
+              <input type="radio" id="t4" name="Tipo de queja" value="Convivencia / acoso"><label for="t4">Convivencia / acoso</label>
+              <input type="radio" id="t5" name="Tipo de queja" value="Seguridad"><label for="t5">Seguridad</label>
+              <input type="radio" id="t6" name="Tipo de queja" value="Otro"><label for="t6">Otro</label>
+            </div>
+            <span class="mensaje-error">Elige un tipo de queja.</span>
+          </div>
+
+          <div class="rejilla">
+            <div class="campo">
+              <label for="nombre">Nombre (opcional)</label>
+              <input type="text" id="nombre" name="Nombre" placeholder="Puedes dejarlo vacío y enviar anónimo" autocomplete="name">
+            </div>
+            <div class="campo">
+              <label for="correo">Correo de contacto (opcional)</label>
+              <input type="email" id="correo" name="Correo" placeholder="tucorreo@ejemplo.com" autocomplete="email">
+              <span class="mensaje-error">Escribe un correo válido o déjalo vacío.</span>
+            </div>
+            <div class="campo">
+              <label for="grupo">Grupo / semestre (opcional)</label>
+              <input type="text" id="grupo" name="Grupo o semestre" placeholder="Ej. 4°B">
+            </div>
+            <div class="campo">
+              <label for="turno">Turno</label>
+              <select id="turno" name="Turno">
+                <option value="No especificado">No especificado</option>
+                <option value="Matutino">Matutino</option>
+                <option value="Vespertino">Vespertino</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="lugar">Lugar de los hechos <span class="req">*</span></label>
+              <input type="text" id="lugar" name="Lugar" placeholder="Ej. Baños edificio C, laboratorio, cancha..." required>
+              <span class="mensaje-error">Dinos dónde ocurrió.</span>
+            </div>
+            <div class="campo">
+              <label for="fecha">¿Cuándo ocurrió? <span class="req">*</span></label>
+              <input type="text" id="fecha" name="Fecha de los hechos" placeholder="Ej. 12 de marzo, o 'todos los lunes'" required>
+              <span class="mensaje-error">Indica cuándo ocurrió.</span>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Urgencia</label>
+            <div class="opciones" role="radiogroup" aria-label="Urgencia">
+              <input type="radio" id="u1" name="Urgencia" value="Baja"><label for="u1">Baja</label>
+              <input type="radio" id="u2" name="Urgencia" value="Media" checked><label for="u2">Media</label>
+              <input type="radio" id="u3" name="Urgencia" value="Alta"><label for="u3">Alta</label>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="queja">Tu queja <span class="req">*</span></label>
+            <textarea id="queja" name="Queja" maxlength="2500" placeholder="Cuenta qué pasó, quiénes estaban involucrados, cuántas veces ha ocurrido y cómo te afecta a ti o a tu grupo." required></textarea>
+            <span class="contador-texto"><span id="conteo">0</span>/2500</span>
+            <span class="mensaje-error">Escribe al menos 20 caracteres para que la queja sea útil.</span>
+          </div>
+
+          <div class="campo">
+            <label for="propuesta">¿Qué propones para resolverlo? (opcional)</label>
+            <textarea id="propuesta" name="Propuesta" maxlength="800" style="min-height:110px" placeholder="Una solución concreta ayuda a que la queja avance."></textarea>
+          </div>
+
+          <div class="campo">
+            <label>Consentimiento <span class="req">*</span></label>
+            <div class="casilla">
+              <input type="checkbox" id="acepto" name="Acepta uso de la información" value="Sí" required>
+              <span>Acepto que SOMOS use esta información para dar seguimiento ante las instancias del plantel, cuidando mi identidad si así lo pido.</span>
+            </div>
+            <div class="casilla">
+              <input type="checkbox" id="anonimo" name="Solicita anonimato" value="Sí">
+              <span>Quiero que mi queja se presente de forma <strong>anónima</strong>.</span>
+            </div>
+            <span class="mensaje-error">Necesitamos tu consentimiento para poder actuar.</span>
+          </div>
+
+          <div class="acciones">
+            <button type="submit" class="boton" id="btnEnviar">Enviar queja</button>
+            <button type="button" class="boton fantasma" id="btnLimpiar">Limpiar</button>
+          </div>
+
+          <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+
+    <section>
+      <h2>Qué pasa con tu queja<span class="sub">Ruta de atención</span></h2>
+      <div class="metricas">
+        <div class="metrica"><b>1</b><small>Se recibe y registra</small></div>
+        <div class="metrica"><b>2</b><small>Se clasifica y verifica</small></div>
+        <div class="metrica"><b>3</b><small>Se lleva a la instancia</small></div>
+        <div class="metrica"><b>4</b><small>Se informa el avance</small></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>¿Prefieres hablarlo?<span class="sub">Otros canales</span></h2>
+      <div class="cta">
+        <p>Si tu situación es urgente o delicada, escríbenos directo por Instagram o al correo del comité. Nadie está solo en esto.</p>
+        <a class="boton" href="https://www.instagram.com/somospolimatute?stkn=bmI3OXRxaDg1YThz" target="_blank" rel="noopener noreferrer">@SomosPoliMatute</a>
+        <a class="boton fantasma" href="mailto:somospolimatute@gmail.com">somospolimatute@gmail.com</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <strong>SOMOS</strong><br><br>
+    Comité Estudiantil · Politécnico Ingeniero Jorge Matute Remus
+  </footer>
+
+  <button id="irArriba" aria-label="Volver arriba">↑</button>
+
+<script>
+(function () {
+  'use strict';
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const CORREO_DESTINO = 'somospolimatute@gmail.com';
+
+  /* ---------- Título letra por letra ---------- */
+  const titulo = document.getElementById('titulo');
+  const texto = titulo.textContent;
+  titulo.textContent = '';
+  [...texto].forEach((ch, i) => {
+    const s = document.createElement('span');
+    s.className = 'letra';
+    s.textContent = ch === ' ' ? '\u00A0' : ch;
+    s.style.animationDelay = (0.25 + i * 0.05) + 's';
+    titulo.appendChild(s);
+  });
+
+  /* ---------- Sidebar ---------- */
+  const sidebar = document.getElementById('sidebar');
+  const velo = document.getElementById('velo');
+  const boton = document.getElementById('toggleSidebar');
+
+  function toggleSidebar(forzarCerrar) {
+    const abrir = forzarCerrar ? false : !sidebar.classList.contains('open');
+    sidebar.classList.toggle('open', abrir);
+    velo.classList.toggle('visible', abrir);
+    boton.innerHTML = abrir ? '✕ Cerrar' : '☰ Menú';
+  }
+  boton.addEventListener('click', () => toggleSidebar());
+  velo.addEventListener('click', () => toggleSidebar(true));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleSidebar(true); });
+
+  /* ---------- Revelado al hacer scroll ---------- */
+  const secciones = document.querySelectorAll('section');
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver((entradas) => {
+      entradas.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    secciones.forEach(s => obs.observe(s));
+  } else {
+    secciones.forEach(s => s.classList.add('visible'));
+  }
+
+  /* ---------- Luz que sigue al cursor en las tarjetas ---------- */
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  });
+
+  /* ---------- Barra de progreso e ir arriba ---------- */
+  const progreso = document.getElementById('progreso');
+  const irArriba = document.getElementById('irArriba');
+  function alScroll() {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    progreso.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+    irArriba.classList.toggle('visible', window.scrollY > 400);
+  }
+  window.addEventListener('scroll', alScroll, { passive: true });
+  alScroll();
+  irArriba.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  /* ---------- Formulario ---------- */
+  const form = document.getElementById('formQueja');
+  const aviso = document.getElementById('aviso');
+  const btnEnviar = document.getElementById('btnEnviar');
+  const btnLimpiar = document.getElementById('btnLimpiar');
+  const queja = document.getElementById('queja');
+  const conteo = document.getElementById('conteo');
+  const correo = document.getElementById('correo');
+  const anonimo = document.getElementById('anonimo');
+  const nombre = document.getElementById('nombre');
+
+  queja.addEventListener('input', () => { conteo.textContent = queja.value.length; });
+
+  anonimo.addEventListener('change', () => {
+    if (anonimo.checked) {
+      nombre.value = '';
+      nombre.disabled = true;
+      nombre.placeholder = 'Queja anónima';
+    } else {
+      nombre.disabled = false;
+      nombre.placeholder = 'Puedes dejarlo vacío y enviar anónimo';
+    }
+  });
+
+  function campoDe(el) { return el.closest('.campo'); }
+  function marcar(el, hayError) { campoDe(el).classList.toggle('error', hayError); }
+
+  form.querySelectorAll('input, select, textarea').forEach(el => {
+    el.addEventListener('input', () => campoDe(el) && campoDe(el).classList.remove('error'));
+    el.addEventListener('change', () => campoDe(el) && campoDe(el).classList.remove('error'));
+  });
+
+  function validar() {
+    let ok = true;
+    let primero = null;
+
+    const tipo = form.querySelector('input[name="Tipo de queja"]:checked');
+    const campoTipo = form.querySelector('input[name="Tipo de queja"]');
+    marcar(campoTipo, !tipo);
+    if (!tipo) { ok = false; primero = primero || campoTipo; }
+
+    ['lugar', 'fecha'].forEach(id => {
+      const el = document.getElementById(id);
+      const vacio = el.value.trim() === '';
+      marcar(el, vacio);
+      if (vacio) { ok = false; primero = primero || el; }
+    });
+
+    const textoQueja = queja.value.trim();
+    marcar(queja, textoQueja.length < 20);
+    if (textoQueja.length < 20) { ok = false; primero = primero || queja; }
+
+    const valorCorreo = correo.value.trim();
+    const correoMal = valorCorreo !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valorCorreo);
+    marcar(correo, correoMal);
+    if (correoMal) { ok = false; primero = primero || correo; }
+
+    const acepto = document.getElementById('acepto');
+    marcar(acepto, !acepto.checked);
+    if (!acepto.checked) { ok = false; primero = primero || acepto; }
+
+    if (primero) primero.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return ok;
+  }
+
+  function mostrarAviso(tipo, html) {
+    aviso.className = 'aviso visible ' + tipo;
+    aviso.innerHTML = html;
+  }
+
+  function textoPlano() {
+    const datos = new FormData(form);
+    const lineas = [];
+    datos.forEach((valor, clave) => {
+      if (clave.startsWith('_') || !String(valor).trim()) return;
+      lineas.push(clave + ': ' + valor);
+    });
+    return lineas.join('\n');
+  }
+
+  function respaldoMailto() {
+    const asunto = 'Buzón de quejas · Poli Matute';
+    return 'mailto:' + CORREO_DESTINO +
+      '?subject=' + encodeURIComponent(asunto) +
+      '&body=' + encodeURIComponent(textoPlano());
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    aviso.className = 'aviso';
+    if (!validar()) {
+      mostrarAviso('mal', 'Revisa los campos marcados en rojo para poder enviar tu queja.');
+      return;
+    }
+
+    btnEnviar.disabled = true;
+    const etiquetaOriginal = btnEnviar.textContent;
+    btnEnviar.textContent = 'Enviando…';
+
+    const datos = new FormData(form);
+    if (nombre.disabled) datos.set('Nombre', 'Anónimo');
+    datos.set('_subject', 'Buzón de quejas · ' + (datos.get('Tipo de queja') || 'General'));
+
+    try {
+      const r = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: datos
+      });
+      const json = await r.json().catch(() => ({}));
+      if (r.ok && String(json.success) !== 'false') {
+        form.reset();
+        conteo.textContent = '0';
+        nombre.disabled = false;
+        mostrarAviso('ok', '<strong>Queja enviada.</strong> Llegó al correo del comité (' + CORREO_DESTINO + '). Gracias por alzar la voz: le damos seguimiento y, si dejaste tu correo, te contactamos.');
+      } else {
+        throw new Error(json.message || 'Error del servicio de envío');
+      }
+    } catch (err) {
+      mostrarAviso('mal',
+        'No pudimos enviarla automáticamente. Usa este enlace para mandarla desde tu correo: ' +
+        '<a href="' + respaldoMailto() + '">enviar por correo a ' + CORREO_DESTINO + '</a>.');
+    } finally {
+      btnEnviar.disabled = false;
+      btnEnviar.textContent = etiquetaOriginal;
+    }
+  });
+
+  btnLimpiar.addEventListener('click', () => {
+    form.reset();
+    conteo.textContent = '0';
+    nombre.disabled = false;
+    aviso.className = 'aviso';
+    form.querySelectorAll('.campo.error').forEach(c => c.classList.remove('error'));
+  });
+
+  /* ---------- Partículas de brasa ---------- */
+  const lienzo = document.getElementById('lienzo');
+  const ctx = lienzo.getContext('2d');
+  let w, h, particulas = [];
+  const raton = { x: -9999, y: -9999 };
+
+  function dimensionar() {
+    w = lienzo.width = window.innerWidth;
+    h = lienzo.height = window.innerHeight;
+    const cantidad = Math.min(120, Math.round(w / 12));
+    particulas = Array.from({ length: cantidad }, () => nueva());
+  }
+  function nueva() {
+    return {
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 2.2 + 0.6,
+      vy: -(Math.random() * 0.5 + 0.15),
+      vx: (Math.random() - 0.5) * 0.3,
+      a: Math.random() * 0.6 + 0.2,
+      tono: 18 + Math.random() * 26
+    };
+  }
+  function pintar() {
+    ctx.clearRect(0, 0, w, h);
+    particulas.forEach(p => {
+      const dx = p.x - raton.x, dy = p.y - raton.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < 14000) {
+        const f = (14000 - d2) / 14000 * 0.9;
+        p.x += dx / Math.sqrt(d2 + 1) * f;
+        p.y += dy / Math.sqrt(d2 + 1) * f;
+      }
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+      if (p.x < -10) p.x = w + 10;
+      if (p.x > w + 10) p.x = -10;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${p.tono}, 100%, 58%, ${p.a})`;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = `hsla(${p.tono}, 100%, 55%, 0.9)`;
+      ctx.fill();
+    });
+    requestAnimationFrame(pintar);
+  }
+
+  window.addEventListener('resize', dimensionar);
+  window.addEventListener('mousemove', e => { raton.x = e.clientX; raton.y = e.clientY; });
+  dimensionar();
+  if (!reduce) pintar();
+})();
+</script>
+</body>
+</html>
